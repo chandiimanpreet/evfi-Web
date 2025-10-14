@@ -1,7 +1,7 @@
 const initialState = {
     user: null,
     chargers: [],
-    phone: ''
+    phone: '914444444444',
 }
 
 const userReducer = (state = initialState, action) => {
