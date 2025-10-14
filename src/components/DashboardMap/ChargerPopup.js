@@ -195,7 +195,9 @@ export default function ChargerPopup({ chargerData, bookingHandler, user, userCu
 
     const checkDisabled = (time) => {
         let binaryTime = decimalToBinary(chargerData.timeSlot);
+        console.log(binaryTime);
         binaryTime = binaryTime.split("").reverse().join("");
+        console.log(binaryTime);
 
         let intTime = parseInt(time.split('-')[0]);
 
@@ -251,6 +253,7 @@ export default function ChargerPopup({ chargerData, bookingHandler, user, userCu
     
     // Progress Bar
     useEffect(() => {
+        console.log(userCurrentBookingGoingOn?.timeSlot);
         const timer = setInterval(() => {
             if (!stopInterval) {
                 setProgress(() => (new Date().getHours() === userCurrentBookingGoingOn?.timeSlot + 1 ? chargingSuccessfullyCompleted()
