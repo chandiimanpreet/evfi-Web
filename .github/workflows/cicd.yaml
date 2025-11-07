@@ -1,104 +1,24 @@
-name: CI/CD Pipeline
+name: Unit Testing Pipeline
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build:
+  unit-testing:
     runs-on: ubuntu-latest
-    env:
-      AWS_REGION: ap-south-1
-      REPOSITORY_NAME: evfi-web
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      - name: Create ECR repository
-        run: |
-          if ! aws ecr describe-repositories --repository-names $REPOSITORY_NAME --region $AWS_REGION >/dev/null 2>&1; then
-            aws ecr create-repository --repository-name $REPOSITORY_NAME --region $AWS_REGION
-            echo "Repository $REPOSITORY_NAME created in region $AWS_REGION"
-          else
-            echo "Repository $REPOSITORY_NAME already exists"
-          fi
-      - name: Build, tag, and push docker image to Amazon ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: rental-car   
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          echo "Building Docker image..."
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker tag $REGISTRY/$REPOSITORY:$IMAGE_TAG $REGISTRY/$REPOSITORY:latest
-          echo "Pushing Docker images..."
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          docker push $REGISTRY/$REPOSITORY:latest
-      - name: Verify deployment
-        run: |
-          echo "Deployment successful"
-          docker images
 
-  sonarqube-scan:
-    name: SonarQube Scan
-    runs-on: ubuntu-latest
-    needs: [build]
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
-      - name: Install Dependencies
-        run: npm ci --legacy-peer-deps
-      - name: SonarQube Scan 
-        uses: sonarsource/sonarqube-scan-action@v6
-        with:
-          projectBaseDir: .
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-  owasp-dependency-check:
-    name: OWASP Dependency Check
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    - name: Set up Java
-      uses: actions/setup-java@v3
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
         node-version: '22.x'
-        cache: 'npm'
+
     - name: Install dependencies
-      run: npm ci --legacy-peer-deps
-    - name: Run OWASP Dependency-Check
-      uses: dependency-check/Dependency-Check_Action@main
-      env:
-        JAVA_HOME: /opt/jdk
-      with:
-        project: myorg-nodejs-project
-        scanPath: .
-        format: HTML
-        outDir: reports
-    - name: Upload Dependency-Check report
-      uses: actions/upload-artifact@v4
-      with:
-        name: dependency-check-report
-        path: reports/dependency-check-report.html
+      run: npm install --legacy-peer-deps
+
+    - name: Unit Testing
+      run: npm test
