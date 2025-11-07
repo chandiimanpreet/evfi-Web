@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ap-south-1
-      REPOSITORY_NAME: evfi-Web
+      REPOSITORY_NAME: evfi-web
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
